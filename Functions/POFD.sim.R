@@ -49,7 +49,6 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
                           "M" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(0.9*(grid.size/segs)) )),
                           "L" = round(runif(1, ceiling(0.5*(grid.size/segs)), ceiling(1*(grid.size/segs))))
         )
-        #points <- round(runif(1, ifelse(frag.size == "S", 3, 9), ceiling((ifelse(frag.size == "S", 0.3, 0.7)*(grid.size/max(3,segs) )))))
       }
       if(s == 1){
         grid.seg <- round(grid.size/segs)
@@ -102,26 +101,13 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   fragPOFD <- function(x.mat, y.mat){ #apply generated fragments to full curve
     # y.mat: curves with noise; x.mat: true curves
     po.x <- x.mat; po.y = y.mat
-    nos.edge.curves <- runif(1, ifelse(n < 20,1,4), round(ifelse(single.frag, 0.15, 0.10)*n)) #number of curves with frags at beginning and end
-    edge.curves.ind <- sample.int(n,nos.edge.curves)# randomly select curves from sample set
-    side.count <- 0
     
     for (i in 1:n) {
-      if(single.equal.frag){# to be removed
-        start = sample(1:(grid.size - (grid.size*0.3)),1)
-        end = start+grid.size*0.3
-        po.x[i,start:end] <- NA; po.y[i,start:end] <- NA
-      }else{
-        if(frag.size == "S" & i %in% edge.curves.ind){
-          side.count <- side.count+1
-          fp <- fragments(edge.ctr = T, ind = ifelse(side.count%%2 == 0, 0,1))
-        }else{
-          fp <- fragments()
-        }
-        po.x[i,fp] <- NA
-        po.y[i,fp] <- NA
-      }
+      fp <- fragments()
+      po.x[i,fp] <- NA
+      po.y[i,fp] <- NA
     }
+    
     if(include.full){# include full curve if True
       full.curves <-  sample(1:n, max(1,round((sample(1:20,1)/100)*n)))
       po.x[full.curves,] <- x.mat[full.curves,]
