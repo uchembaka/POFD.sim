@@ -16,6 +16,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     if (n%%5) n <- n-(n%%5)
   }
   
+  call.args <- as.list(environment())
   
   #for sparse POFD: number of observations in each curve
   no.sparse.obs <- round(runif(ifelse(equal.sparse, 1, n), min(3, range.sparse.obs), max(grid.size/10, range.sparse.obs)))
@@ -141,7 +142,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     }
     mu <- colMeans(x)
     return(list("Grid" = grid, "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
-                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type))
+                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type, "POFD.args" = call.args))
   }
   
   
@@ -174,7 +175,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     if(sample.mean) mu <- colMeans(x)
     
     return(list("Grid" = grid, "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
-                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type))
+                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type, "POFD.args" = call.args))
   }
   
   
@@ -193,7 +194,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     if(sample.mean) mu <- colMeans(x)
     
     return(list("Grid" = grid, "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
-                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type))
+                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type, "POFD.args" = call.args))
   }
   
   GP <- function(){
@@ -232,7 +233,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     
     return(list("Grid" = t, "True.Mean" = mu, "True.Functions" = x, 
                 "Dense.Functions" = y, "True.Covariance" = cov.x,
-                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type))
+                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type, "POFD.args" = call.args))
   }
   
   
@@ -264,7 +265,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     
     mu <- colMeans(x)
     return(list("Grid" = t, "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
-                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type))
+                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type, "POFD.args" = call.args))
     
   }
   
@@ -319,7 +320,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     pofd.x <- rbind(class.1$POFDs.True.Functions[samps[[1]],], class.2$POFDs.True.Functions[samps[[2]],])
     return(list("Grid" = class.1$Grid, "True.Functions" = x, "True.Mean.1" = mu1, "True.Functions.1" = x1, 
                 "True.Mean.2" = mu2, "True.Functions.2" = x2, "Dense.Functions" = y, "True.Covariance" = cov(x), 
-                "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "classes" = k, "Type" = POFD.type))
+                "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "classes" = k, "Type" = POFD.type, "POFD.args" = call.args))
   }
   
   
