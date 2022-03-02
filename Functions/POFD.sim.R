@@ -1,4 +1,4 @@
-source("helper.func.R")
+source("Functions/helper.func.R")
 
 
 POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg = "S", frag.size = "S", include.full = T,
@@ -35,7 +35,6 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   
   fragments <- function(){# Generate missing fragments
     
-    
     segs <- round(ifelse(single.frag, 1, runif(1, 1, min(5, grid.size/10)))) # generate segments of curve 
     vec<- rep(T, grid.size)
     tj <- 0
@@ -45,8 +44,8 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
       }else{
         points <- switch (frag.size,
                           "S" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(0.3*(grid.size/segs)) )),
-                          "M" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(0.9*(grid.size/segs)) )),
-                          "L" = round(runif(1, ceiling(0.5*(grid.size/segs)), ceiling(1*(grid.size/segs))))
+                          "M" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(1*(grid.size/segs)) )),
+                          "L" = round(runif(1, ceiling(0.6*(grid.size/segs)), ceiling(1*(grid.size/segs))))
         )
       }
       if(s == 1){
