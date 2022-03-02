@@ -4,7 +4,7 @@ source("helper.func.R")
 POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg = "S", frag.size = "S", include.full = T,
                      single.frag = F, equal.points = F, nos.points = 5, single.equal.frag = F, range.sparse.obs = c(3,10), 
                      equal.sparse = T,  err.sd = 0.125, base.func = 3, classify = F, mean.fun = "(t-0.5)^2", cov.fun = NA, 
-                     full.domain = T, sample.mean = T, sample.cov = T, norm.range = c(1,1,10)){
+                     full.domain = T, sample.mean = T, sample.cov = T, norm.range = c(1,1,10), args.Mercer = NULL){
   if(!is.null(norm.range)){
     if(length(norm.range) != 3 | norm.range[1] %!in% c(0,1)) stop("wrong range.norm specification")
   }else{
@@ -199,8 +199,8 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   
   GP <- function(){
     kern <- function(s, t) {
-      if(cov.fun =="Wei-1"){
-        Wei.kern_1(s,t)
+      if(cov.fun =="Mercer"){
+        Mercer.kern.decomp(s,t)
       }else if(!is.na(cov.fun)){
         eval(parse(text = cov.fun))
       }else{
@@ -269,18 +269,37 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     
   }
   
-  Wei.kern_1 <- function(s,t){
-    phi.sin <- function(k,t) sqrt(2)*sin(2*k*pi*t)
-    phi.cos <- function(k,t) sqrt(2)*cos(2*k*pi*t)
-    K <- 0
-    for (i in 1:4) {
-      if(i%%2 == 1){
-        K <- K + 0.5^(i-1)*phi.sin(1,s)*phi.sin(1,t)
+  
+  Mercer.kern.decomp <- function(s, t){
+    if(is.null(args.Mercer)) stop("Specify arguments for Mercer's kern decomposition")
+    k <- args.Mercer$k; args.Mercer$lambda = "0.5^(k-1)"
+    phi <- args.Mercer$phi; args.Mercer$alternate.k = T ; args.Mercer$repeat.phi = T
+    
+    if(length(phi)%%2 != 0) stop("Incorrect number of basis functions specified")
+    if(!repeat.phi & length(k) != length(phi)) stop("Number of basis functions not equal lenght of K and repeat.phi set to F")
+    
+    if(length(k) == length(phi)){
+      phi.list <- vector(mode = "list", length = length(k))
+      for(i in 1:length(k)){
+        phi.list[[i]] <- function(t) eval(parse(text = phi[[i]]))
+      }
+      return(sum(sapply(k, function(i) eval(parse(text = lambda))*phi.list[[i]](s)*phi.list[[i]](t))))
+    }
+    
+    if(length(k) != length(phi) & repeat.phi){
+      if(length(phi) > 2) stop("Number of basis function must be 2, e.g sin(kt) and cos(kt)")
+      phi.list <- vector(mode = "list", length = 2)
+      for(i in 1:length(phi)){
+        phi.list[[i]] <- function(t) eval(parse(text = phi[[i]]))
+      }
+      if(alternate.k){
+        phi1 <- sapply(which(k%%2 == 1), function(i) eval(parse(text = lambda))*phi.list[[1]](s)*phi.list[[1]](t))
+        phi2 <- sapply(which(k%%2 == 0), function(i) eval(parse(text = lambda))*phi.list[[2]](s)*phi.list[[2]](t))
+        return(sum(phi1,phi2))
       }else{
-        K <- K + 0.5^(i-1)*phi.cos(2,s)*phi.cos(2,t)
+        return(sum(sapply(k, function(i) eval(parse(text = lambda))*phi.list[[i]](s)*phi.list[[i]](t))))
       }
     }
-    return(K)
   }
   
   
