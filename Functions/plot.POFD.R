@@ -5,7 +5,7 @@
 #no.plots: number of plots to produce.
 
 plot.POFD <- function(data, no.obs = 5, with.class = F, no.plots = 2, index = NA){
-  #if (length(dev.list()!=0)) {dev.off()}
+  par(mfrow = c(1,1))
   library(tidyverse); library(plotly)
   
   y.lims <- c(min(data$Dense.Functions), max(data$Dense.Functions))
@@ -29,7 +29,12 @@ plot.POFD <- function(data, no.obs = 5, with.class = F, no.plots = 2, index = NA
     }
   }
   if(no.plots >= 8){
-    fig <- plot_ly(z=~data$True.Covariance)%>%add_surface()
+    fig <- plot_ly(z=~data$True.Covariance,showscale = FALSE)%>%add_surface()%>%add_surface()%>%
+      layout(title =  "Kniep Covariance",scene = list(
+        xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)), 
+        yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)), 
+        zaxis = list(title = "cov(s,t)",titlefont = list(size = 15), tickfont = list(size = 10)),
+        margin = list(l = 5, r = 5, b=0, t=0)))
     print(fig)
     print("Check Viewer pane for true Covariance surface")
   }
