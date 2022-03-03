@@ -5,15 +5,31 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
                      single.frag = F, equal.points = F, nos.points = 5, single.equal.frag = F, range.sparse.obs = c(3,10), 
                      equal.sparse = T,  err.sd = 0.125, base.func = list(func=1, optn.args = NULL), classify = F, mean.fun = "(t-0.5)^2", cov.fun = NA, 
                      full.domain = T, sample.mean = T, sample.cov = T, norm.range = c(1,1,10), args.Mercer = NULL){
+  
+  ### Checks
   if(!is.null(norm.range)){
-    if(length(norm.range) != 3 | norm.range[1] %!in% c(0,1)) stop("wrong range.norm specification")
+    if(length(norm.range) != 3 | norm.range[1] %!in% c(0,1)) stop("Invalid norm.range specification")
   }else{
     norm.range <- c(2,2,2)
   }
   
-  if(base.func == 5){
+  if(base.func[[1]] == 5){
     if (n < 10) n <- 10
     if (n%%5) n <- n-(n%%5)
+  }
+  
+  if(base.func[[1]] == 6 & is.null(base.func[[2]])){
+    print("Setting default optional arguments")
+    base.func$optn.args <- list(xt = 1, mu = 1)
+  }
+  
+  if(classify & base.func[[1]] != 6){
+    base.func[[1]] = 6
+    print("base.func$func set to 6")
+    if(is.null(base.func[[2]])){
+      print("Setting default optional arguments")
+      base.func[[2]] <- list(xt = 1, mu = 1)
+    }
   }
   
   call.args <- as.list(environment())
@@ -149,15 +165,15 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   Alois <- function(mu.f = 1){
     grid <- seq(0,1, length.out = grid.size)
     if(mu.f == 1){
-      mu <- grid^(ifelse(base.func == 2, 2,1))+sin(2*pi*grid)
+      mu <- grid^(ifelse(base.func[[1]] == 2, 2,1))+sin(2*pi*grid)
     }else{
-      mu <- grid^(ifelse(base.func == 2, 2,1))+cos(2*pi*grid)
+      mu <- grid^(ifelse(base.func[[1]] == 2, 2,1))+cos(2*pi*grid)
     }
     
     K = 50
     variations <- sapply(1:n, function(i){
-      ksi.1 <- 50*sqrt(exp(-(((1:K)-1)^2)/ifelse(base.func == 2,1,5)))*rnorm(K)
-      ksi.2 <- 50*sqrt(exp(-((1:K)^2)/ifelse(base.func == 2,1,5)))*rnorm(K)  
+      ksi.1 <- 50*sqrt(exp(-(((1:K)-1)^2)/ifelse(base.func[[1]] == 2,1,5)))*rnorm(K)
+      ksi.2 <- 50*sqrt(exp(-((1:K)^2)/ifelse(base.func[[1]] == 2,1,5)))*rnorm(K)  
       #t((t(ksi.1)%*%(cos((1:K)%*%t(pi*grid))/sqrt(5))) + (t(ksi.2)%*%(sin((1:K)%*%t(pi*grid))/sqrt(5))))
       colMeans(t(sapply(1:K, function(k) (ksi.1[k]*(cos(k*t(pi*grid))/sqrt(5))) + (ksi.2[k]*(sin(k*t(pi*grid))/sqrt(5))) )))
     })
