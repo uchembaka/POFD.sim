@@ -3,7 +3,7 @@ source("Functions/helper.func.R")
 
 POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg = "S", frag.size = "S", include.full = T,
                      single.frag = F, equal.points = F, nos.points = 5, single.equal.frag = F, range.sparse.obs = c(3,10), 
-                     equal.sparse = T,  err.sd = 0.125, base.func = 3, classify = F, mean.fun = "(t-0.5)^2", cov.fun = NA, 
+                     equal.sparse = T,  err.sd = 0.125, base.func = list(func=1, optn.args = NULL), classify = F, mean.fun = "(t-0.5)^2", cov.fun = NA, 
                      full.domain = T, sample.mean = T, sample.cov = T, norm.range = c(1,1,10), args.Mercer = NULL){
   if(!is.null(norm.range)){
     if(length(norm.range) != 3 | norm.range[1] %!in% c(0,1)) stop("wrong range.norm specification")
@@ -270,6 +270,59 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   }
   
   
+  Delaigle <- function(xt = base.func$optn.args$xt, mu = base.func$optn.args$mu, class= 1){# based on simulations in Delaigle and Hal 2013
+    
+    
+    if(class == 2){
+      if(mu == 1) {c <- 12; d <- 4}
+      else {c <- 40; d <- 12}
+    }else{
+      if(mu == 1) {c <- 15; d <- 5}
+      else {c <- 50; d <- 20}
+    }
+    
+    if(is.null(base.func$optn.args)) stop("Specify which xt and mu")
+    t <- 1:grid.size#seq(0,1, length.out = grid.size)
+    x <- matrix(NA, nrow = n, ncol = grid.size)
+    if(mu == 1){
+      mu <- function(t) sin(t/c)/(((0.1*t-d)^2)+1)
+    }else {
+      mu <- function(t) inv.logit((t-c)/d)
+    }
+    
+    if(xt == 1) {
+      z <- runif(n, -2/3, 2/3)
+      f <- function(t, u) 0.02*((3*t+100)*(u+1))^(1/2)
+      x <- t(sapply(1:n, function(i) mu(t) + z[i]*f(t,z[i])))
+      if(norm.range[1] == 1) x <- range.norm(x, a=norm.range[2], b = norm.range[3])
+      y <- x+err.mat
+    }else if(xt == 2){
+      s <- runif(n, -5, 10); u <- runif(n, -1,1)
+      v <- runif(n, 0.025, 0.05); w <- runif(n, 2,3)
+      z <- runif(n, 0.1, 0.5)
+      x <- t(sapply(1:n, function(i) mu(t-s[i]) +  (u[i]+v[i]*sin(t/w[i]))*(z[i]+sin(t*(10^3)*pi))))
+      if(norm.range[1] == 1) x <- range.norm(x, a=norm.range[2], b = norm.range[3])
+      y <- x+err.mat
+    } else{
+      u <- runif(n, -1,1); z <- rnorm(n, 0, 0.04)
+      v <- runif(n, 0.025, 0.05); w <- runif(n, 2,3)
+      x <- t(sapply(1:n, function(i) mu(t) +  u[i]+v[i]*sin(t/w[i])+z[i]))
+      if(norm.range[1] == 1) x <- range.norm(x, a=norm.range[2], b = norm.range[3])
+      y <- x+err.mat
+    }
+    
+    if(POFD.type == "sparse"){
+      pofd <- sparsePOFD(x.mat=x, y.mat=y)
+    }else{
+      pofd <- fragPOFD(x.mat=x, y.mat=y)
+    }
+    if(sample.mean) mu <- colMeans(x)
+    
+    return(list("Grid" = t, "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
+                "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x, "Type" = POFD.type, "POFD.args" = call.args))
+  }
+  
+  
   Mercer.kern.decomp <- function(s, t){
     if(is.null(args.Mercer)) stop("Specify arguments for Mercer's kern decomposition")
     k <- args.Mercer$k; args.Mercer$lambda = "0.5^(k-1)"
@@ -304,13 +357,10 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   
   
   makeClass <- function(){# generate class
-    if(base.func > 2){
-      print("base.func set to 1")
-      base.func = 1
-    }
     samps <- list(sample(1:n, ceiling(n/2)), sample(1:n, floor(n/2)))
     k <- c(rep(1, length(samps[[1]])),  rep(2, length(samps[[2]])))
-    class.1 <- Alois(); class.2 <- Alois(mu.f = 2)
+    class.1 <- Delaigle(xt = base.func$optn.args$xt, mu = base.func$optn.args$mu)
+    class.2 <- Delaigle(xt = base.func$optn.args$xt, mu = base.func$optn.args$mu,class=2)
     
     mu1 <- class.1$True.Mean; x1 <- class.1$True.Functions[samps[[1]],]
     mu2 <- class.2$True.Mean; x2 <- class.2$True.Functions[samps[[2]],]
@@ -329,20 +379,24 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     class(sim) <- c("POFD", "list")
     return(sim)
   }else{
-    if(base.func %in% c(1,2)){
+    if(base.func[[1]] %in% c(1,2)){
       sim <- Alois()
       class(sim) <- c("POFD", "list")
       return(sim)
-    }else if(base.func == 3){
+    }else if(base.func[[1]] == 3){
       sim <- Kraus()
       class(sim) <- c("POFD", "list")
       return(sim)
-    }else if(base.func == 4){
+    }else if(base.func[[1]] == 4){
       sim <- Wei()
       class(sim) <- c("POFD", "list")
       return(sim)
-    }else if (base.func == 5){
+    }else if (base.func[[1]] == 5){
       sim <- composite.functions()
+      class(sim) <- c("POFD", "list")
+      return(sim)
+    }else if (base.func[[1]] == 6){
+      sim <- Delaigle()
       class(sim) <- c("POFD", "list")
       return(sim)
     }else{
