@@ -7,6 +7,10 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
                      full.domain = T, sample.mean = T, sample.cov = T, norm.range = c(1,1,10), args.Mercer = NULL){
   
   ### Checks
+  if(class(base.func) == "numeric"){
+    base.func <- list(func = base.func, optn.args = NULL)
+  }
+  
   if(!is.null(norm.range)){
     if(length(norm.range) != 3 | norm.range[1] %!in% c(0,1)) stop("Invalid norm.range specification")
   }else{
@@ -53,31 +57,33 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   fragments <- function(){# Generate missing fragments
     
     segs <- round(ifelse(single.frag, 1, runif(1, 1, min(5, grid.size/10)))) # generate segments of curve 
-    vec<- rep(T, grid.size)
+    vec<- rep(TRUE, grid.size)
     tj <- 0
+    seg.total <- segs*(floor(grid.size/segs))
+    off <- grid.size - seg.total
     for(s in 1:segs){
       if(equal.points){
         points <- nos.points
       }else{
         points <- switch (frag.size,
                           "S" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(0.3*(grid.size/segs)) )),
-                          "M" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(1*(grid.size/segs)) )),
-                          "L" = round(runif(1, ceiling(0.6*(grid.size/segs)), ceiling(1*(grid.size/segs))))
+                          "M" = round(runif(1, min(4, ceiling(0.3*(grid.size/segs))), ifelse(s==segs, floor(1*(grid.size/segs))+off, floor(1*(grid.size/segs))) )),
+                          "L" = round(runif(1, ceiling(0.6*(grid.size/segs)), ifelse(s==segs, floor(1*(grid.size/segs))+off, floor(1*(grid.size/segs)))  ))
         )
       }
       if(s == 1){
-        grid.seg <- round(grid.size/segs)
+        grid.seg <- floor(grid.size/segs)
         tj <- ifelse(points>=grid.seg, 1, sample.int((grid.seg-points), 1)) #start of obs point
-        end <- tj+points# end of obs point
+        end <- tj+points-1# end of obs point
         
       }else{
-        grid.seg <- round(grid.size/segs)
+        grid.seg <- floor(grid.size/segs)
         next.seg <- ifelse(s==segs, grid.size, grid.seg * s)
         prev.seg <- next.seg - grid.seg
         prev.end <- end
         ctrl.tj <- (prev.seg - end)
-        tj <- ifelse(points>=grid.seg, next.seg-points, round( runif(1, prev.end, next.seg-points) ))
-        end <- tj+points
+        tj <- ifelse(points>=grid.seg, next.seg-points, floor( runif(1, prev.end, next.seg-points) ))
+        end <- tj+points-1
       }
       vec[tj:end] <- F
     }
