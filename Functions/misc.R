@@ -1,4 +1,11 @@
-source("helper.func.R")
+
+POFD.sim2List <- function(FD.mat){
+  grid <- seq(0,1, len=ncol(FD.mat)) 
+  Ly <- split(t(FD.mat), rep(1:ncol(t(FD.mat)), each = nrow(t(FD.mat))))
+  Lt <- lapply(Ly, function(i) grid[!is.na(i)])
+  Ly <- lapply(Ly, function(i) i[!is.na(i)])
+  return(list(Ly, Lt))
+}
 
 
 Kniep2POFD.sim <- function(simuldata){
