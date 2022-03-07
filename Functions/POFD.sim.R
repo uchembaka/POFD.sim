@@ -304,7 +304,7 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
     }
     
     if(is.null(base.func$optn.args)) stop("Specify which xt and mu")
-    t <- 1:grid.size#seq(0,1, length.out = grid.size)
+    t <- seq(1, 100, length.out = grid.size)#1:grid.size#seq(0,1, length.out = grid.size)
     x <- matrix(NA, nrow = n, ncol = grid.size)
     if(mu == 1){
       mu <- function(t) sin(t/c)/(((0.1*t-d)^2)+1)
