@@ -2,7 +2,7 @@
 # rep : number of replications
 # comp : compare methods
 # use.parallel : use doparallel (recommeded for large replications)
-# comp.type : fit, scores or mean and cov (mean and covarince used for curve estimation, .)
+# comp.type : fit, scores or mean.cov (mean and covarince used for curve estimation, .)
 # ncores: number of cores to use. Defaults to n-2
 # metric: "RMSE", "MSE" 
 # data.type : POFD or dense
@@ -214,7 +214,7 @@ POFD.sim.comp <- function(..., rep = 10, comp = c("PACE", "Kniep"), use.parallel
     }
     
     
-    if("mean and cov" %in% comp.type){
+    if("mean.cov" %in% comp.type){
       comp.mean <- comp.cov <- matrix(NA, nrow = rep, ncol = length(comp))
       means.covs <- get.mean.cov()
       for(i in 1:rep){
@@ -236,8 +236,8 @@ POFD.sim.comp <- function(..., rep = 10, comp = c("PACE", "Kniep"), use.parallel
     
     
     if(length(comp.type) == 1 & comp.type == "fit")comp.list <- list("fit" = comp.fit, "fit.var" = comp.fitVar)
-    if(length(comp.type) == 1 & comp.type == "mean and cov") comp.list <- list("mean" = comp.mean, "cov" = comp.cov)
-    if(all(c("fit", "mean and cov") %in% comp.type)){
+    if(length(comp.type) == 1 & comp.type == "mean.cov") comp.list <- list("mean" = comp.mean, "cov" = comp.cov)
+    if(all(c("fit", "mean.cov") %in% comp.type)){
       comp.list <- list("fit" = comp.fit, "fit.var" = comp.fitVar, "mean" = comp.mean, "cov" = comp.cov)
     } 
     return(comp.list)
@@ -256,6 +256,7 @@ POFD.sim.comp <- function(..., rep = 10, comp = c("PACE", "Kniep"), use.parallel
     if(detectCores() > 3){
       ncores <- ifelse(!is.null(ncores), ncores, detectCores()-1)
       if(ncores > 1){
+        registerDoParallel(ncores)
         data <- get.data()
         if("kniep" %in% comp) kniep <- get.Kniep()
         if("pace" %in% comp) pace <- get.PACE()
@@ -285,9 +286,10 @@ POFD.sim.comp <- function(..., rep = 10, comp = c("PACE", "Kniep"), use.parallel
     comp.res <- compare()
   }
   
-  
-  
-  return(comp.res)
+  out <- list("comp.res"=comp.res, "type" = comp.type, "methods" = paste(comp, collapse = "-"), "rep" = rep, "metric"= metric,
+              "POFD.sim.args" = list("n"=data[[1]]$POFD.args$n, "grid.size" = length(data[[1]]$Grid), "error" = data[[1]]$POFD.args$err.sd))
+  class(out) <- c("POFD.comp", "list")
+  return(out)
   
   
 }
