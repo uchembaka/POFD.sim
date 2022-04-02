@@ -345,13 +345,13 @@ POFD.sim <- function(n = 50, grid.size = 100, POFD.type = "fragmented", miss.seg
   }
   
   
-  Mercer.kern.decomp <- function(s, t){
+  Mercer.kern.decomp <- function(s, t){# finite basis expansion
     if(is.null(args.Mercer)) stop("Specify arguments for Mercer's kern decomposition")
     k <- args.Mercer$k; args.Mercer$lambda = "0.5^(k-1)"
     phi <- args.Mercer$phi; args.Mercer$alternate.k = T ; args.Mercer$repeat.phi = T
     
     if(length(phi)%%2 != 0) stop("Incorrect number of basis functions specified")
-    if(!repeat.phi & length(k) != length(phi)) stop("Number of basis functions not equal lenght of K and repeat.phi set to F")
+    if(!repeat.phi & length(k) != length(phi)) stop("Number of basis functions not equal lenght of K and repeat.phi set to FALSE")
     
     if(length(k) == length(phi)){
       phi.list <- vector(mode = "list", length = length(k))
