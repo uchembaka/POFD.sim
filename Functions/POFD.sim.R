@@ -436,7 +436,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
       pofd.y <- list("Ly" = lapply(Ly, function(y) y[-Ts.index]), "Lt" = lapply(Lt, function(t) t[-Ts.index]))
       all.obs.pts <- sort(unique(unlist(Lt)))
       cov.x = cov(x)
-      return(list("All.obs.points" = all.obs.pts,  "True.Means" = mu, "True.Functions" = allx, "Dense.Functions" = y, 
+      return(list("Grid" = list("All.obs.points" = all.obs.pts, "Reg.Grid" = Ts),  "True.Means" = mu, "True.Functions" = allx, "Dense.Functions" = y, 
                   "True.Covariance" = cov.x, "True.List" = list("Lx" = Lx.reg, "Lt" = Lt.reg), "Dense.List" = list("Ly" = Ly.reg, "Lt" = Lt.reg),
                   "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "POFD.args" = call.args, "classes" = K))
       
@@ -493,7 +493,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
         pofd.y <- list("Ly" = lapply(Ly, function(y) y[-Ts.index]), "Lt" = lapply(Lt, function(t) t[-Ts.index]))
         all.obs.pts <- sort(unique(unlist(Lt)))
         mu <- colMeans(x); cov.x = cov(x)
-        return(list("All.obs.points" = all.obs.pts,  "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
+        return(list("Grid" = list("All.obs.points" = all.obs.pts, "Reg.Grid" = Ts),  "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
                     "True.List" = list("Lx" = Lx.reg, "Lt" = Lt.reg), "Dense.List" = list("Ly" = Ly.reg, "Lt" = Lt.reg),
                     "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "POFD.args" = call.args))
       }else{
