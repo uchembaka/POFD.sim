@@ -30,7 +30,6 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
     if (n%%5) n <- n-(n%%5)
   }
   
-  if(base.func[[1]] == 6 & grid.range[2] < 100) grid.range <- c(0,100)
   if(base.func[[1]] == 6 & is.null(base.func[[2]])){
     print("Using default optional arguments")
     base.func$optn.args <- list(xt = 1, mu = 1)
@@ -44,6 +43,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
       base.func[[2]] <- list(xt = 1, mu = 1)
     }
   }
+  if(base.func[[1]] == 6 & grid.range[2] < 100) grid.range <- c(0,100)
   
   frag.size <- toupper(frag.size)
   if(frag.size %!in% c("S", "M", "L")) stop("invalid fragment size. Use \"S\" or \"M\" or \"L\" ")
@@ -416,16 +416,17 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
       Lt <- irregFragment()
       Lx1 <- lapply(Lt, function(t) Delaigle(t))[C1]
       Lx2 <- lapply(Lt, function(t) Delaigle(t, class = 2))[C2]
+      Lt <- c(Lt[C1], Lt[C2])
       Ly1 <- lapply(Lx1, function(x) x+rnorm(length(x), 0, err.sd))
       Ly2 <- lapply(Lx2, function(x) x+rnorm(length(x), 0, err.sd))
       
-      Lx <- c(Lx1, Lx2); Ly <- c(Lx1, Lx2)
+      Lx <- c(Lx1, Lx2); Ly <- c(Ly1, Ly2)
       x <- list2mat(Lx)
       y <- list2mat(Ly)
       
       allx <- list("True.Functions" = x, "True.Functions.C1" = x[sec1,], "True.Functions.C2" = x[sec2,])
       #ally <- list("True.Functions.C1" = x[sec1,], "True.Functions.C2" = x[sec2,])
-      mu <- list("mu.C1" = colMeans(allx[[1]]), "mu.C2" = colMeans(allx[[2]]))
+      mu <- list("mu.C1" = colMeans(allx[[2]]), "mu.C2" = colMeans(allx[[3]]))
       
       Ts <- seq(grid.range[1],grid.range[2], length.out = grid.size)
       Ts.index <- 1:grid.size
@@ -452,7 +453,6 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
       y <- rbind(y1, y2)
       allx <- list("True.Functions" = x, "True.Functions.C1" = x1, "True.Functions.C2" = x2)
       mu <- list("mu.C1" = colMeans(x1), "mu.C2" = colMeans(x2))
-      
       if(POFD.type == "sparse"){
         pofd <- sparsePOFD(x.mat=x, y.mat=y)
       }else{
@@ -497,7 +497,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
                     "True.List" = list("Lx" = Lx.reg, "Lt" = Lt.reg), "Dense.List" = list("Ly" = Ly.reg, "Lt" = Lt.reg),
                     "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "POFD.args" = call.args))
       }else{
-        Ts <- seq(grid.range[1],grid.range[2], length.out = grid.size)
+        Ts <- seq(grid.range[1], grid.range[2], length.out = grid.size)
         err.mat <- matrix(rnorm(n*grid.size,0, err.sd), nrow = n, ncol = grid.size)
         x <- switch(base.func[[1]],
                     sapply(1:n, function(i) Alois(Ts)),
@@ -521,14 +521,12 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
     }
     
   }
-  
-  
-  
-  
+
   sim <- generateSim()
   class(sim) = c("POFD", "list")
   
   return(sim)
+  
   
   
 }#POFD.sim
