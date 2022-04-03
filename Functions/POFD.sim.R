@@ -155,10 +155,10 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
           ai <- 0.6; bi <- 1
         }
         
-        t.frag <- c(t.frag, round(sort(unique(runif(points, ai*grid.range[2], bi*grid.range[2]))),4))#sort(unique(runif(points, t.reg[ai], t.reg[bi])))
+        t.frag <- c(t.frag, round(sort(unique(runif(points, ai*grid.range[2], bi*grid.range[2]))),4))
       }
       
-      t.frag.list[[i]] <- t.frag
+      t.frag.list[[i]] <- sort(unique(t.frag))
     }
     
     
@@ -428,9 +428,9 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
       #ally <- list("True.Functions.C1" = x[sec1,], "True.Functions.C2" = x[sec2,])
       mu <- list("mu.C1" = colMeans(allx[[2]]), "mu.C2" = colMeans(allx[[3]]))
       
-      Ts <- seq(grid.range[1],grid.range[2], length.out = grid.size)
+      round(seq(grid.range[1],grid.range[2], length.out = grid.size),4)
       Ts.index <- 1:grid.size
-      Lt.reg <- lapply(1:n, function (i) Ts)
+      Lt.reg <- rep(list(Ts), n)#lapply(1:n, function (i) Ts)
       Lx.reg <- lapply(Lx, function(x) x[Ts.index])
       Ly.reg <- lapply(Ly, function(y) y[Ts.index])
       pofd.x <- list("Lx" = lapply(Lx, function(x) x[-Ts.index]), "Lt" = lapply(Lt, function(t) t[-Ts.index]))
@@ -484,7 +484,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
         Ly <- lapply(Lx, function(x) x+rnorm(length(x), 0, err.sd))
         x <- list2mat(Lx)
         y <- list2mat(Ly)
-        Ts <- seq(grid.range[1],grid.range[2], length.out = grid.size)
+        Ts <- round(seq(grid.range[1],grid.range[2], length.out = grid.size),4)
         Ts.index <- 1:grid.size
         Lt.reg <- lapply(1:n, function (i) Ts)
         Lx.reg <- lapply(Lx, function(x) x[Ts.index])
