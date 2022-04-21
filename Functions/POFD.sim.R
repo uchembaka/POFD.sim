@@ -41,7 +41,7 @@ library(boot)
 POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "fragmented", miss.seg = "S", frag.size = "S", include.full = TRUE,
                      single.frag = FALSE, equal.points = FALSE, nos.points = 5, single.equal.frag = FALSE, range.sparse.obs = c(3,15), irreg.domain = FALSE,
                      equal.sparse = TRUE,  err.sd = 0.125, base.func = list(func=1, optn.args = NULL), classify = FALSE, mean.fun = "(t-0.5)^2", cov.fun = "0.005*exp((-abs(s-t)^2/0.05))", 
-                     full.domain = TRUE, norm.range = c(0,0,10), 
+                     full.domain = TRUE, norm.range = c(0,0,10),
                      args.Mercer = list(k = 1:4, lambda = "0.5^(k-1)", phi = list(phi.sin = "sqrt(2)*sin(2*k*t)",phi.cos = "sqrt(2)*cos(2*k*t)"), alternate.k = T, repeat.phi = T),
                      Matern.args = list(l = 1, v = 1)){
   
@@ -105,8 +105,8 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
     args.Mercer = NULL
     Matern.args = NULL
   }
-
-
+  
+  
   call.args <- as.list(environment())
   
   #for sparse POFD: number of observations in each curve
@@ -450,7 +450,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
   }
   
   
-  Matern <- function(s,t, Matern.args=NULL){
+  Matern <- function(s,t){
     d <- abs(s-t)
     if(is.null(Matern.args)) {
       l = 1; v = 1
@@ -496,8 +496,9 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
       pofd.y <- list("Ly" = lapply(Ly, function(y) y[-Ts.index]), "Lt" = lapply(Lt, function(t) t[-Ts.index]))
       all.obs.pts <- sort(unique(unlist(Lt)))
       cov.x = cov(x)
+      cov.pd <- as.matrix(Matrix::nearPD(cov.x)$mat)
       return(list("Grid" = list("All.obs.points" = all.obs.pts, "Reg.Grid" = Ts),  "True.Means" = mu, "True.Functions" = allx, "Dense.Functions" = y, 
-                  "True.Covariance" = cov.x, "True.List" = list("Lx" = Lx.reg, "Lt" = Lt.reg), "Dense.List" = list("Ly" = Ly.reg, "Lt" = Lt.reg),
+                  "True.Covariance" = cov.x, "True.Covariance.PD" = cov.pd,"True.List" = list("Lx" = Lx.reg, "Lt" = Lt.reg), "Dense.List" = list("Ly" = Ly.reg, "Lt" = Lt.reg),
                   "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "POFD.args" = call.args, "classes" = K))
       
       
@@ -518,8 +519,9 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
         pofd <- fragPOFD(x.mat=x, y.mat=y)
       }
       cov.x = cov(x)
+      cov.pd <- as.matrix(Matrix::nearPD(cov.x)$mat)
       return(list("Grid" = Ts, "True.Means" = mu, "True.Functions" = allx, "Dense.Functions" = y, "Dense.List" = mat2List(y),
-                  "True.Covariance" = cov.x, "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x,
+                  "True.Covariance" = cov.x, "True.Covariance.PD" = cov.pd, "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x,
                   "POFD.List" = mat2List(pofd$po.y), "POFD.args" = call.args, "classes" = K))
     }
   }
@@ -552,7 +554,9 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
         pofd.y <- list("Ly" = lapply(Ly, function(y) y[-Ts.index]), "Lt" = lapply(Lt, function(t) t[-Ts.index]))
         all.obs.pts <- sort(unique(unlist(Lt)))
         mu <- colMeans(x); cov.x = cov(x)
-        return(list("Grid" = list("All.obs.points" = all.obs.pts, "Reg.Grid" = Ts),  "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "True.Covariance" = cov(x),
+        cov.pd <- as.matrix(Matrix::nearPD(cov.x)$mat)
+        return(list("Grid" = list("All.obs.points" = all.obs.pts, "Reg.Grid" = Ts),  "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, 
+                    "True.Covariance" = cov(x), "True.Covariance.PD" = cov.pd,
                     "True.List" = list("Lx" = Lx.reg, "Lt" = Lt.reg), "Dense.List" = list("Ly" = Ly.reg, "Lt" = Lt.reg),
                     "POFDs" = pofd.y, "POFDs.True.Functions" = pofd.x, "POFD.args" = call.args))
       }else{
@@ -574,8 +578,9 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
           pofd <- fragPOFD(x.mat=x, y.mat=y)
         }
         mu <- colMeans(x); cov.x = cov(x)
+        cov.pd <- as.matrix(Matrix::nearPD(cov.x)$mat)
         return(list("Grid" = Ts, "True.Mean" = mu, "True.Functions" = x, "Dense.Functions" = y, "Dense.List" = mat2List(y), "True.Covariance" = cov.x,
-                    "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x,"POFD.List" = mat2List(pofd$po.y), "POFD.args" = call.args))
+                    "True.Covariance.PD" = cov.pd, "POFDs" = pofd$po.y, "POFDs.True.Functions" = pofd$po.x,"POFD.List" = mat2List(pofd$po.y), "POFD.args" = call.args))
       }
     }
     
