@@ -1,10 +1,49 @@
 ## Version 3.0
 library(boot)
 
+
+# n: number of functions in sample
+# grid.size: For regular grid simlation. Number of points if the fully observed curves
+# POFD.type: Type of the POFD - "fragmented" or "sparse"
+# frag.size: Type of fragment ("S" for short, "M" for mixed and "L" for long)
+# include.full: Specify weather to include fully observed curves
+# single.frag: Specify whether each curve should have oonly one fragment per curve (fragmented curves only)
+# equal.points: Whether each curve should have equal number of observed points
+# nos.points: Number of points to use if equal.points = TRUE
+# sinle.equal.frag: NO LONGER IN USE
+# range.sparse.obs: Range of number of observation in the sparese functional data
+# irreg.domain: Whether to use irreg domain for fragmented samples
+# equal.sparse: Whether each curve should have equal number of points in the sparse setting (TO BE REMOVED)
+# err.sd: Standard deviation of zero mean normal error added to each obs
+# base.func; A 2 item list with first item specifying the base function used for simulation and second argument for base 
+#function specifications. Also accept a single number corresponding the base function. (Default settings will apply).
+#Base function 1 & 2: Base function specified in Kneip and Liebl (2020) (No optn.args needed)
+#Base function 3: BAse function specified in Kraus (2015) (No optn.args needed)
+#Base function 4: Gaussian process. with mean and covariance function specified using mean.fun and cov.fun
+#Base function 5: equal composition of functions of the form t+sin(2*pi*t), 7*(t-0.5)^3, 0.5*exp(t)+(t-0.5)^2, t-cos(2*pi*t)
+# sin(2*pi*t) + cos(2*pi*t)
+#Base function 6: Base functions specified in Delaigle and Hall (2013) (optns.args xt and mu see paper for ref)
+
+# classify: Whether to make create class of function (uses base.fun = 6)
+# mean.fun: Mean specification for GP functions should be specified in terms of t. e.g "(t-0.5)^2"
+# cov.fun: Covariance specification for GP. should be specified in terms of s and t. e.g "0.005*exp((-abs(s-t)^2/0.05))". One can also
+#specify covariance as matern (use args.matern to specify args or NULL for default) and mercer's decomposition use args.mercer to specify form
+# Full.domain: Whether the fragmented observations in short case should be guaranteed to cover the entire domain.
+# norm.range: normalize the range of the function. The first entry of the vector should be 1 or 0 specifing whether or not to 
+#normalize range (1 for TRUE) to the second (min) and third (max) entry.
+# args.Mercer: specify decomposition of mercer. args are K: vector of index, lambda: form of eigen values e.g "0.5^(k-1)",
+#phi: list of eigen function e.g "list("sqrt(2)*sin(2*k*t)", "sqrt(2)*cos(2*k*t)"), alternate.k, whether the phi's should be alternated based on length(k)
+#repeat.phi: repeat the eigen function as function of k. See default for example
+
+# args.matern: specify shape and range args for matern e.g list(l = 1, v = 1)
+
+
 POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "fragmented", miss.seg = "S", frag.size = "S", include.full = TRUE,
                      single.frag = FALSE, equal.points = FALSE, nos.points = 5, single.equal.frag = FALSE, range.sparse.obs = c(3,15), irreg.domain = FALSE,
-                     equal.sparse = TRUE,  err.sd = 0.125, base.func = list(func=1, optn.args = NULL), classify = FALSE, mean.fun = "(t-0.5)^2", cov.fun = NULL, 
-                     full.domain = TRUE, norm.range = c(0,0,10), args.Mercer = NULL){
+                     equal.sparse = TRUE,  err.sd = 0.125, base.func = list(func=1, optn.args = NULL), classify = FALSE, mean.fun = "(t-0.5)^2", cov.fun = "0.005*exp((-abs(s-t)^2/0.05))", 
+                     full.domain = TRUE, norm.range = c(0,0,10), 
+                     args.Mercer = list(k = 1:4, lambda = "0.5^(k-1)", phi = list(phi.sin = "sqrt(2)*sin(2*k*t)",phi.cos = "sqrt(2)*cos(2*k*t)"), alternate.k = T, repeat.phi = T),
+                     Matern.args = list(l = 1, v = 1)){
   
   "%!in%" <-Negate("%in%")
   
@@ -48,6 +87,26 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
   frag.size <- toupper(frag.size)
   if(frag.size %!in% c("S", "M", "L")) stop("invalid fragment size. Use \"S\" or \"M\" or \"L\" ")
   POFD.type <- tolower(POFD.type)
+  
+  if(base.func[[1]] != 4){
+    cov.fun = NULL
+    mean.fun = NULL
+    args.Mercer = NULL
+    Matern.args = NULL
+  }
+  if(!is.null(cov.fun)){
+    if(base.func[[1]] == 4 & tolower(cov.fun) == "mercer") Matern.args = NULL
+    if(base.func[[1]] == 4 & tolower(cov.fun) == "matern") args.Mercer = NULL
+    if(base.func[[1]] == 4 & tolower(cov.fun) != "matern" & tolower(cov.fun) != "mercer"){
+      args.Mercer = NULL
+      Matern.args = NULL
+    } 
+  }else{
+    args.Mercer = NULL
+    Matern.args = NULL
+  }
+
+
   call.args <- as.list(environment())
   
   #for sparse POFD: number of observations in each curve
@@ -244,14 +303,14 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
     return(x)
   }
   
-  GP <- function(tps, cov.fun = NULL, mean.fun= NULL){
+  GP <- function(tps){
     kern <- function(s, t) {
       if(is.null(cov.fun)){
         phis <- list(phi.1 = function(t) 1 + t*0, phi.2 = function(t) (2*t - 1)*sqrt(3),
                      phi.3 <- function(t) (6*t^2 - 6*t + 1)*sqrt(5), phi.4 <- function(t) (20 * t^3 - 30*t^2 +12*t -1)*sqrt(7))
         sum(sapply(1:4, function(i) 0.5^(i-1)*phis[[i]](s)*phis[[i]](t)))
       }else if(tolower(cov.fun) =="mercer"){
-        Mercer.kern.decomp(s,t)
+        MercerKernDecomp(s,t)
       }else if(tolower(cov.fun) == "matern"){
         Matern(s,t)
       }else{
@@ -521,7 +580,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
     }
     
   }
-
+  
   sim <- generateSim()
   class(sim) = c("POFD", "list")
   
