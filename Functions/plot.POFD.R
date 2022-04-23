@@ -54,6 +54,23 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
     }
   }
   
+  
+  if("true.precision.surface" %in% plots){
+    if(cov.plot.type == "3D"){
+      fig2 <- plot_ly(x =~ x, y =~ x, z=~solve(pofd.obj$True.Covariance.PD),showscale = FALSE)%>%add_surface()%>%add_surface()%>%
+        layout(title =  "True Precision Surface",scene = list(
+          xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
+          yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
+          zaxis = list(title = TeX("$\\sigma(s,t)^{-1}$"),titlefont = list(size = 15), tickfont = list(size = 10)),
+          margin = list(l = 5, r = 5, b=0, t=0)))%>% config(mathjax = "cdn")
+      print(fig2)
+    }else{
+      image(solve(pofd.obj$True.Covariance.PD), cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
+            main = expression(paste(sigma,"(s,t)")))
+      contour(pofd.obj$True.Covariance, add = TRUE)
+    }
+  }
+  
   if("true.covariance.surface" %in% plots){
     if(cov.plot.type == "3D"){
       fig <- plot_ly(x =~ x, y =~ x, z=~pofd.obj$True.Covariance,showscale = FALSE)%>%add_surface()%>%add_surface()%>%
@@ -83,21 +100,6 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
     }
   }
   
-  if("true.precision.surface" %in% plots){
-    if(cov.plot.type == "3D"){
-      fig2 <- plot_ly(x =~ x, y =~ x, z=~solve(pofd.obj$True.Covariance.PD),showscale = FALSE)%>%add_surface()%>%add_surface()%>%
-        layout(title =  "True Precision Surface",scene = list(
-          xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
-          yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
-          zaxis = list(title = TeX("$\\sigma(s,t)^{-1}$"),titlefont = list(size = 15), tickfont = list(size = 10)),
-          margin = list(l = 5, r = 5, b=0, t=0)))%>% config(mathjax = "cdn")
-      print(fig2)
-    }else{
-      image(solve(pofd.obj$True.Covariance.PD), cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
-            main = expression(paste(sigma,"(s,t)")))
-      contour(pofd.obj$True.Covariance, add = TRUE)
-    }
-  }
   
   if("all.true.functions" %in% plots){
     matplot(x ,t(pofd.obj$True.Functions),
@@ -130,25 +132,45 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
   }
   
   if("true.fragments" %in% plots){
-    p.lims <- c(min(pofd.obj$True.Functions[p,]), max(pofd.obj$True.Functions[p,]))
-    matplot(x, t(pofd.obj$True.Functions[p,, drop = FALSE]), type = "l", lty = 2, col = cols[1:nos.obs],
-            ylab = "y(t)", xlab = "t", ylim = p.lims,cex = 1.5, cex.lab = 1.5,
-            main = paste0(pofd.obj$POFD.args$POFD.type, " Functional Data (True Functions)"))
+    
     if(is.irreg){
+      pmat <- matrix(NA, nrow = nos.obs, ncol = pofd.obj$POFD.args$grid.size)
+      for(i in 1:nos.obs){
+        pmat[i,] <- pofd.obj$True.List$Lx[[p[i]]]
+      }
+      
+      p.lims <- c(min(pmat), max(pmat))
+      matplot(x, t(pmat), type = "l", lty = 2, col = cols[1:nos.obs],
+              ylab = "y(t)", xlab = "t", ylim = p.lims,cex = 1.5, cex.lab = 1.5,
+              main = paste0(pofd.obj$POFD.args$POFD.type, " Functional Data (True Functions)"))
+      
       invisible(sapply(1:length(p), function(i) points(pofd.obj$POFDs.True.Functions$Lt[[p[i]]], pofd.obj$POFDs.True.Functions$Lx[[p[i]]], pch = 19, col = cols[i])))
     }else{
+      p.lims <- c(min(pofd.obj$Dense.Functions[p,]), max(pofd.obj$Dense.Functions[p,]))
+      matplot(x, t(pofd.obj$True.Functions[p,, drop = FALSE]), type = "l", lty = 2, col = cols[1:nos.obs],
+              ylab = "y(t)", xlab = "t", ylim = p.lims,cex = 1.5, cex.lab = 1.5,
+              main = paste0(pofd.obj$POFD.args$POFD.type, " Functional Data (True Functions)"))
       matpoints(x, t(pofd.obj$POFDs.True.Functions[p,, drop = FALSE]), pch=19, col = cols[1:nos.obs])
     }
   }
   
   if("noisy.fragments" %in% plots){
-    p.lims <- c(min(pofd.obj$Dense.Functions[p,]), max(pofd.obj$Dense.Functions[p,]))
-    matplot(x, t(pofd.obj$Dense.Functions[p,, drop = FALSE]), type = "l", lty = 2, col = cols[1:nos.obs],
-            ylab = "y(t)", xlab = "t", ylim = p.lims,cex = 1.5, cex.lab = 1.5,
-            main = paste0(pofd.obj$POFD.args$POFD.type, " Functional Data + Noise"))
     if(is.irreg){
+      pmat <- matrix(NA, nrow = nos.obs, ncol = pofd.obj$POFD.args$grid.size)
+      for(i in 1:nos.obs){
+        pmat[i,] <- pofd.obj$Dense.List$Ly[[p[i]]]
+      }
+      p.lims <- c(min(pmat), max(pmat))
+      matplot(x, t(pmat), type = "l", lty = 2, col = cols[1:nos.obs],
+              ylab = "y(t)", xlab = "t", ylim = p.lims,cex = 1.5, cex.lab = 1.5,
+              main = paste0(pofd.obj$POFD.args$POFD.type, " Functional Data + Noise"))
+      
       invisible(sapply(1:length(p), function(i) points(pofd.obj$POFDs$Lt[[p[i]]], pofd.obj$POFDs$Ly[[p[i]]], pch = 19, col = cols[i])))
     }else{
+      p.lims <- c(min(pofd.obj$Dense.Functions[p,]), max(pofd.obj$Dense.Functions[p,]))
+      matplot(x, t(pofd.obj$Dense.Functions[p,, drop = FALSE]), type = "l", lty = 2, col = cols[1:nos.obs],
+              ylab = "y(t)", xlab = "t", ylim = p.lims,cex = 1.5, cex.lab = 1.5,
+              main = paste0(pofd.obj$POFD.args$POFD.type, " Functional Data + Noise"))
       matpoints(x, t(pofd.obj$POFDs[p,, drop = FALSE]), pch=19, col = cols[1:nos.obs])
     }
   }
