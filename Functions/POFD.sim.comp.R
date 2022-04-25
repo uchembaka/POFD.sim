@@ -44,7 +44,8 @@ POFD.sim.comp <- function(..., rep = 10, comp = c("PACE", "Kniep"), use.parallel
           sim.list <- data[[i]]$Dense.List #POFD.sim2List(data[[i]]$Dense.Functions)
         }
         
-        FPCA(sim.list[[1]], sim.list[[2]], optns = list(nRegGrid = data[[i]]$POFD.args$grid.size))
+        FPCA(sim.list[[1]], sim.list[[2]], 
+             optns = list(nRegGrid = data[[i]]$POFD.args$grid.size, methodMuCovEst = ifelse(data.type == "dense","cross-sectional","smooth")))
       }
     }else{
       pace <- vector("list", length = rep)
