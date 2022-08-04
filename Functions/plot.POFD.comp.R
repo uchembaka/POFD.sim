@@ -8,7 +8,7 @@ plot.POFD.comp <- function(comp.obj){
 
     m <- ncol(comp.obj$comp.res[["fit"]])
     boxplot(comp.obj$comp.res[["fit"]], pch = 19, col = cols[1:m],main = paste0("Fit (", comp.obj$metric, ")"))
-    boxplot(comp.obj$comp.res[["fit.var"]], pch = 19, col = cols[1:m], main = "Fit Variance")
+    #boxplot(comp.obj$comp.res[["fit.var"]], pch = 19, col = cols[1:m], main = "Fit Variance")
 
   }else if(comp.obj$type == "mean.cov"){
     m <- ncol(comp.obj$comp.res[["mean"]])

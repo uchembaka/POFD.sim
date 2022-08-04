@@ -142,7 +142,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
   
   fragments <- function(){# Generate missing fragments
     
-    segs <- round(ifelse(single.frag, 1, runif(1, 1, min(5, grid.size/10)))) # generate segments of curve 
+    segs <- round(ifelse(single.frag, 1, runif(1, 1, min(3, grid.size/10)))) # generate segments of curve 
     vec<- rep(TRUE, grid.size)
     tj <- 0
     seg.total <- segs*(floor(grid.size/segs))#total available points based on segments partitions
@@ -152,7 +152,7 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
         points <- nos.points
       }else{
         points <- switch (frag.size,
-                          "S" = round(runif(1, min(3, ceiling(0.3*(grid.size/segs))), ceiling(0.3*(grid.size/segs)) )),
+                          "S" = round(runif(1, min(3, ceiling(0.2*(grid.size/segs))), ceiling(0.2*(grid.size/segs)) )),
                           "M" = round(runif(1, min(4, ceiling(0.3*(grid.size/segs))), ifelse(s==segs, floor(1*(grid.size/segs))+off, floor(1*(grid.size/segs))) )),
                           "L" = round(runif(1, ceiling(0.6*(grid.size/segs)), ifelse(s==segs, floor(1*(grid.size/segs))+off, floor(1*(grid.size/segs)))  ))
         )

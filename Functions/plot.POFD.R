@@ -24,7 +24,7 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
   else p <- sample(n, nos.obs)
   
   if(length(plots) < 1) plots = c("noisy.fragments", "true.fragments")
-  if(plots == "all") plots = c("noisy.fragments", "true.fragments","obs.grid", "covariance.grid", "all.fragmented",
+  if(plots[1] == "all") plots = c("noisy.fragments", "true.fragments","obs.grid", "covariance.grid", "all.fragmented",
                               "all.true.functions", "true.mean.function", "true.covariance.surface", "true.precision.surface")
   
   is.irreg <- pofd.obj$POFD.args$irreg.domain
