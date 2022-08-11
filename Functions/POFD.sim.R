@@ -48,6 +48,8 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
   "%!in%" <-Negate("%in%")
   
   ############################################# Checks #####################################################
+  if(length(grid.range) != 2) grid.range <- c(0, grid.range)
+  
   if(class(base.func) == "numeric"){
     base.func <- list(func = base.func, optn.args = NULL)
   }
@@ -472,12 +474,16 @@ POFD.sim <- function(n = 50, grid.size = 100, grid.range = c(0,1), POFD.type = "
   Matern <- function(s,t){
     d <- abs(s-t)
     if(is.null(Matern.args)) {
-      l = 1; v = 1
+      b = 1; v = 1; a = 1;
     }else{
-      l = Matern.args$l; v = Matern.args$v
+      b = Matern.args$b; v = Matern.args$v; a = Matern.args$a
     }
-    d=ifelse(d == 0,1e-20,d)
-    res = (2^(1-v) / gamma(v))*((sqrt(2*v) * d / l)^v)*besselK(sqrt(2*v) * d / l, nu = v)
+    x = d/(b*grid.range[2])
+    
+    sig0 = 2^(v-1)*gamma(v)*factorial(a)
+    
+    if(d == 0) res = sig0
+    else res = a*(x^v)*besselK(x, v)
     return(res)
   }
   
