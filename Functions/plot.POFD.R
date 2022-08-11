@@ -10,7 +10,8 @@ library(RColorBrewer)
 # cov.plot.type : "3D" or "2D"
 #index: provide specific indexes to plot
 
-#plots = c("noisy.fragments", "true.fragments","obs.grid", "covariance.grid", "all.fragmented", "all.true.functions", "true.mean.function", "true.covariance.surface")
+#plots = c("noisy.fragments", "true.fragments","obs.grid", "covariance.grid", "all.fragmented", 
+#"all.true.functions", "true.mean.function", "true.covariance.surface")
 
 plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.fragments"), cov.plot.type = "3D", index = NA){
   
@@ -57,7 +58,7 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
   
   if("true.precision.surface" %in% plots){
     if(cov.plot.type == "3D"){
-      fig2 <- plot_ly(x =~ x, y =~ x, z=~solve(pofd.obj$True.Covariance.PD),showscale = FALSE)%>%add_surface()%>%add_surface()%>%
+      fig2 <- plot_ly(x =~ x, y =~ x, z=~solve(pofd.obj$True.Covariance.PD),showscale = FALSE)%>%add_surface()%>%
         layout(title =  "True Precision Surface",scene = list(
           xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
           yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
@@ -67,28 +68,44 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
     }else{
       image(solve(pofd.obj$True.Covariance.PD), cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
             main = expression(paste(sigma,"(s,t)")))
-      contour(pofd.obj$True.Covariance, add = TRUE)
+      contour(pofd.obj$True.Covariance.PD, add = TRUE)
     }
+    
+    if(pofd.obj$POFD.args$base.func$func == 4){
+      if(cov.plot.type == "3D"){
+        fig2 <- plot_ly(x =~ x, y =~ x, z=~solve(pofd.obj$pop.mu.cov$cov),showscale = FALSE)%>%add_surface()%>%
+          layout(title =  "Population Precision Surface",scene = list(
+            xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
+            yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
+            zaxis = list(title = TeX("$\\sigma(s,t)^{-1}$"),titlefont = list(size = 15), tickfont = list(size = 10)),
+            margin = list(l = 5, r = 5, b=0, t=0)))%>% config(mathjax = "cdn")
+        print(fig2)
+      }else{
+        image(solve(pofd.obj$pop.mu.cov$cov), cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
+              main = expression(paste(sigma,"(s,t)")))
+        contour(pofd.obj$pop.mu.cov$cov, add = TRUE)
+      }
+    }
+    print("Check Viewer pane for precision surface")
   }
   
   if("true.covariance.surface" %in% plots){
     if(cov.plot.type == "3D"){
-      fig <- plot_ly(x =~ x, y =~ x, z=~pofd.obj$True.Covariance,showscale = FALSE)%>%add_surface()%>%add_surface()%>%
+      fig <- plot_ly(x =~ x, y =~ x, z=~pofd.obj$True.Covariance,showscale = FALSE)%>%add_surface()%>%
         layout(title =  "True Covariance",scene = list(
           xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
           yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
           zaxis = list(title = TeX("$\\sigma(s,t)$"),titlefont = list(size = 15), tickfont = list(size = 10)),
           margin = list(l = 5, r = 5, b=0, t=0)))%>% config(mathjax = "cdn")
       print(fig)
-      
-      fig2 <- plot_ly(x =~ x, y =~ x, z=~pofd.obj$True.Covariance.PD,showscale = FALSE)%>%add_surface()%>%add_surface()%>%
+      fig2 <- plot_ly(x =~ x, y =~ x, z=~pofd.obj$True.Covariance.PD,showscale = FALSE)%>%add_surface()%>%
         layout(title =  "True Covariance (PD)",scene = list(
           xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
           yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
           zaxis = list(title = TeX("$\\sigma(s,t)$"),titlefont = list(size = 15), tickfont = list(size = 10)),
           margin = list(l = 5, r = 5, b=0, t=0)))%>% config(mathjax = "cdn")
       print(fig2)
-      print("Check Viewer pane for true Covariance surface")
+      print("Check Viewer pane for Covariance surface")
     }else{
       image(pofd.obj$True.Covariance, cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
             main = expression(paste(sigma,"(s,t)")))
@@ -97,6 +114,22 @@ plot.POFD <- function(pofd.obj, nos.obs = 5, plots = c("noisy.fragments", "true.
       image(pofd.obj$True.Covariance.PD, cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
             main = expression(paste(sigma,"(s,t)")))
       contour(pofd.obj$True.Covariance, add = TRUE)
+    }
+    
+    if(pofd.obj$POFD.args$base.func$func == 4){
+      if(cov.plot.type == "3D"){
+        fig <- plot_ly(x =~ x, y =~ x, z=~pofd.obj$pop.mu.cov$cov,showscale = FALSE)%>%add_surface()%>%
+          layout(title =  "Population Covariance",scene = list(
+            xaxis = list(title = "s",titlefont = list(size = 15), tickfont = list(size = 10)),
+            yaxis = list(title = "t", titlefont = list(size = 15), tickfont = list(size = 10)),
+            zaxis = list(title = TeX("$\\sigma(s,t)$"),titlefont = list(size = 15), tickfont = list(size = 10)),
+            margin = list(l = 5, r = 5, b=0, t=0)))%>% config(mathjax = "cdn")
+        print(fig)
+      }else{
+        image(pofd.obj$pop.mu.cov$cov, cex = 1.5, cex.lab = 1.5, xlab = "t", ylab = "s",
+              main = expression(paste(sigma,"(s,t)")))
+        contour(pofd.obj$pop.mu.cov$cov, add = TRUE)
+      }
     }
   }
   
